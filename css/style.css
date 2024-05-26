@@ -1,0 +1,58 @@
+#track{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    
+    
+
+}
+.trackInfo{
+   
+    width: 200px;
+    height: 200px;
+    background-color: black;
+    display: flex;
+    flex-direction: column-reverse;
+    margin: 10px;
+    padding: 10px;
+    text-align: center;
+    margin: 5%;
+   align-items: center;
+    padding: 5%;
+    border-radius: 50px;
+  
+}
+
+.trackName{
+    background-color:brown;
+    margin: 2%;
+}
+
+.trackArtist{
+    background-color: rgb(0, 255, 98);
+    margin: 2%;
+    bottom: ;
+}
+
+.trackAlbum{
+    background-color: rgb(247, 0, 255);
+    margin: 2%;
+}
+
+.trackPage{
+    background-color: rgb(255, 255, 255);
+    margin: 2%;
+}
+.trackArt{
+    width: 100px;
+    height: 100px;
+    margin: 2%;
+    background-color: rgb(255, 255, 0);
+    border-radius: 50px;
+}
+img{
+    width: 100px;
+    border-radius: 50px;
+    height: 100px;
+    margin: 2%;
+}
