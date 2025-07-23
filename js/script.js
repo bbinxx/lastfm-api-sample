@@ -1,167 +1,135 @@
 const user = "";// LastFm User id
 const api_key = '';//Add your API KEY
 const limit = '5';
-var page = "1";
-const api_url ='http://ws.audioscrobbler.com/2.0/?method=user.getRecentTracks&user='+user+'&api_key='+api_key+'&limit='+limit+'&page='+page+'&format=json';
-//console.log(api_url);
+const page = "1";
 
+// Create status message element
+function createStatusMessage() {
+    const statusDiv = document.createElement('div');
+    statusDiv.id = 'status-message';
+    document.body.insertBefore(statusDiv, document.getElementById('track'));
+    return statusDiv;
+}
+
+function showMessage(message, isError = false) {
+    const statusDiv = document.getElementById('status-message') || createStatusMessage();
+    statusDiv.textContent = message;
+    statusDiv.className = isError ? 'error' : 'success';
+}
 
 async function getLastFm() {
+    // Validate API key and user
+    if (!api_key) {
+        showMessage('Error: Please add your Last.fm API key in the configuration', true);
+        return;
+    }
 
-    const response = await fetch(api_url);
-    const Data = await response.json();
-    const totalPages = Data.recenttracks['@attr'].totalPages;
-    const total = Data.recenttracks['@attr'].total;
-    const track = Data.recenttracks.track; 
-    var trackNumber = "1";
-    console.log('Total Pages: '+totalPages);
-    console.log('Scroblles: '+total);
+    if (!user) {
+        showMessage('Error: Please add your Last.fm username in the configuration', true);
+        return;
+    }
 
+    const api_url = `https://ws.audioscrobbler.com/2.0/?method=user.getRecentTracks&user=${user}&api_key=${api_key}&limit=${limit}&page=${page}&format=json`;
 
-    //Track details
-    Object.keys(track).forEach(key => {
-        //console.log(key, track[key]);
-        //const { name , artist , album , url , image , date } = track[key];
-        const trackDetails = track[key];
+    try {
+        showMessage('Loading tracks...');
+        const response = await fetch(api_url);
         
-        const track_Info = document.createElement('div');
-        const track_Name = document.createElement('div');
-        const track_Artist = document.createElement('div');
-        const track_Album = document.createElement('div');
-        const track_Page = document.createElement('div');
-        const track_Art = document.createElement('div');
-        const tracks = document.getElementById("track");
-        
-        track_Info.classList.add('trackInfo');
-        track_Name.classList.add('trackName');
-        track_Artist.classList.add('trackArtist');
-        track_Album.classList.add('trackAlbum');
-        track_Page.classList.add('trackPage');
-        track_Art.classList.add('trackArt');
-
-
-                
-        track_Info.classList.add('trackInfo');
-        tracks.appendChild(track_Info);
-
-
-        //Now Playing
-        if(trackDetails['@attr']){
-            //console.log(trackDetails['@attr'].nowplaying);
-            const nowPlaying = trackDetails['@attr'].nowplaying;
-
-
-            console.log('Now Playing');
-
-           // document.write("<b>Now Playing</b><br>");
-           
-            
-
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        //trackNumber
-        else{
-            console.log(trackNumber);
-           // document.write('<br>'+trackNumber+'<br>');
-            trackNumber++;
+        const Data = await response.json();
+
+        if (Data.error) {
+            throw new Error(Data.message || 'Last.fm API error');
         }
-             
-        //Name
-        const trackName = trackDetails.name;
-        console.log('Name: '+trackName);
 
-        //document.write("Name: "+trackName+'<br>')
+        const totalPages = Data.recenttracks['@attr'].totalPages;
+        const total = Data.recenttracks['@attr'].total;
+        const track = Data.recenttracks.track;
 
-       //////////////////////////////////
-        track_Info.appendChild(track_Name);
-        track_Name.innerHTML = trackName;
+        showMessage(`Successfully loaded ${total} tracks`);
+        renderTracks(track);
 
+    } catch (error) {
+        showMessage(`Error: ${error.message}`, true);
+        console.error('Error:', error);
+    }
+}
 
-        //Artist
-        const trackArtist = trackDetails.artist['#text'];
-        console.log('Artist: '+trackArtist);
+function renderTracks(tracks) {
+    const trackContainer = document.getElementById("track");
+    trackContainer.innerHTML = ''; // Clear existing tracks
 
-       // document.write("Artist: "+trackArtist+'<br>')
+    tracks.forEach((trackDetails, index) => {
+        const trackInfo = createTrackElement(trackDetails, index + 1);
+        trackContainer.appendChild(trackInfo);
+    });
+}
 
-       //////////////////////////////////
-       track_Info.appendChild(track_Artist);
-       track_Artist.innerHTML = trackArtist;
+function createTrackElement(trackDetails, trackNumber) {
+    const trackInfo = document.createElement('div');
+    trackInfo.classList.add('trackInfo');
 
-  
-        
-        //Album
-        const trackAlbum = trackDetails.album['#text'];
-        console.log('Album: '+trackAlbum);
-
-        //document.write("Album: "+trackAlbum+'<br>')
-
-        //////////////////////////////////
-        track_Info.appendChild(track_Album);
-        track_Album.innerHTML = trackAlbum;
-            
-
-        //URL
-        const trackURL = trackDetails.url;
-        console.log('URL: '+trackURL);
-
-       // document.write("<a href="+trackURL+">"+trackURL+"</a><br>")
-
-       //////////////////////////////////
-       track_Info.appendChild(track_Page);
-       track_Page.innerHTML = "<a href="+trackURL+"><b>"+trackName+"</b>-"+trackArtist+"</a><br>";
-
-        //Date
-        /*Object.values(date).forEach(val => {
-            console.log(val);
-        });*/
-
-        //Image
-        Object.values(trackDetails.image).forEach(val => {
-
-            //Small
-           if(val.size=='small'){
-            const imageSmall = val['#text'];
-            //console.log(imageSmall);
-           }
-
-           //Medium
-           if(val.size=='medium'){
-            const imageMedium = val['#text'];
-            //console.log(imageMedium);
-           }
-
-           //Large
-           if(val.size=='large'){
-            const trackImage_Large = val['#text'];
-           // console.log(trackImage_Large);
-            //document.write("<a href="+trackImage_Large+">"+trackImage_Large+"</a><br><br>")
-           }
-
-           //Extralarge
-           if(val.size=='extralarge'){
-            const trackImage_Extralarge = val['#text'];
-            console.log(trackImage_Extralarge);
-          //  document.write("<a href="+trackImage_Extralarge+">"+trackImage_Extralarge+"</a><br><br>")
-        
-          ///////////////////////////////////
-          track_Info.appendChild(track_Name);
-          track_Name.innerHTML = trackName; 
-
-          // document.write("<img src="+trackImage_Extralarge+">")
-
-          /////////////////////////////////
-          track_Info.appendChild(track_Art);
-          track_Art.innerHTML = "<img src="+trackImage_Extralarge+">"
-
-           }
-
-           });
-           
-           console.log('--------------------------------------------------------------------------');
-          
-
-           
-        });
-
+    // Handle "Now Playing" status
+    const isNowPlaying = trackDetails['@attr']?.nowplaying;
+    
+    // Create track elements
+    const elements = {
+        art: createTrackArt(trackDetails),
+        name: createTextElement('trackName', trackDetails.name),
+        artist: createTextElement('trackArtist', trackDetails.artist['#text']),
+        album: createTextElement('trackAlbum', trackDetails.album['#text']),
+        page: createTrackLink(trackDetails)
     };
-    getLastFm();
+
+    // Add "Now Playing" indicator
+    if (isNowPlaying) {
+        const nowPlaying = createTextElement('nowPlaying', '▶ Now Playing');
+        trackInfo.appendChild(nowPlaying);
+    }
+
+    // Append all elements
+    Object.values(elements).forEach(element => trackInfo.appendChild(element));
+
+    return trackInfo;
+}
+
+function createTextElement(className, text) {
+    const element = document.createElement('div');
+    element.classList.add(className);
+    element.textContent = text;
+    return element;
+}
+
+function createTrackArt(trackDetails) {
+    const artDiv = document.createElement('div');
+    artDiv.classList.add('trackArt');
+    
+    const image = trackDetails.image.find(img => img.size === 'extralarge');
+    if (image && image['#text']) {
+        const img = document.createElement('img');
+        img.src = image['#text'];
+        img.alt = trackDetails.name;
+        artDiv.appendChild(img);
+    }
+    
+    return artDiv;
+}
+
+function createTrackLink(trackDetails) {
+    const linkDiv = document.createElement('div');
+    linkDiv.classList.add('trackPage');
+    
+    const link = document.createElement('a');
+    link.href = trackDetails.url;
+    link.target = '_blank';
+    link.textContent = `${trackDetails.name} - ${trackDetails.artist['#text']}`;
+    
+    linkDiv.appendChild(link);
+    return linkDiv;
+}
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', getLastFm);
